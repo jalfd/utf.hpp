@@ -1,6 +1,8 @@
 #define CATCH_CONFIG_MAIN
 #include <catch/catch.hpp>
 
+#include <algorithm>
+
 #include "utf.hpp"
 
 using namespace utf;
@@ -614,4 +616,93 @@ TEST_CASE("validate_codepoint", "") {
     CHECK(validate_codepoint(0x10000));
     CHECK(validate_codepoint(0x10ffff));
     CHECK(!validate_codepoint(0x110000));
+}
+
+template <size_t N8, size_t N16, size_t N32>
+void test_strings(const char(& s8)[N8], const char16_t(& s16)[N16], const char32_t(& s32)[N32], size_t codepoints) {
+    const int L8 = N8-1;
+    const int L16 = N16-1;
+    const int L32 = N32-1;
+
+    stringview<utf8> sv8(s8, s8 + L8);
+    stringview<utf16> sv16(s16, s16 + L16);
+    stringview<utf32> sv32(s32, s32 + L32);
+
+    CHECK(sv8.codepoints() == codepoints);
+    CHECK(sv16.codepoints() == codepoints);
+    CHECK(sv32.codepoints() == codepoints);
+
+    CHECK(sv8.bytes() == L8 * sizeof(char));
+    CHECK(sv16.bytes() == L16 * sizeof(char16_t));
+    CHECK(sv32.bytes() == L32 * sizeof(char32_t));
+
+    CHECK(sv8.codeunits() == L8);
+    CHECK(sv16.codeunits() == L16);
+    CHECK(sv32.codeunits() == L32);
+
+    CHECK(sv8.codeunits<utf16>() == L16);
+    CHECK(sv8.codeunits<utf32>() == L32);
+    CHECK(sv16.codeunits<utf8>() == L8);
+    CHECK(sv16.codeunits<utf32>() == L32);
+    CHECK(sv32.codeunits<utf8>() == L8);
+    CHECK(sv32.codeunits<utf16>() == L16);
+
+    CHECK(sv8.bytes<utf16>() == L16 * sizeof(char16_t));
+    CHECK(sv8.bytes<utf32>() == L32 * sizeof(char32_t));
+    CHECK(sv16.bytes<utf8>() == L8 * sizeof(char));
+    CHECK(sv16.bytes<utf32>() == L32 * sizeof(char32_t));
+    CHECK(sv32.bytes<utf8>() == L8 * sizeof(char));
+    CHECK(sv32.bytes<utf16>() == L16 * sizeof(char16_t));
+
+    char buf8[L8+1];
+    char16_t buf16[L16+1];
+    char32_t buf32[L32+1];
+
+    CHECK(sv8.to<utf16>(buf16) == buf16 + L16);
+    CHECK(sv16.to<utf32>(buf32) == buf32 + L32);
+    CHECK(sv32.to<utf8>(buf8) == buf8 + L8);
+
+    // check range equals
+    CHECK(std::equal(s8, s8 + L8, buf8));
+    CHECK(std::equal(s16, s16 + L16, buf16));
+    CHECK(std::equal(s32, s32 + L32, buf32));
+
+    CHECK(sv32.to<utf16>(buf16) == buf16 + L16);
+    CHECK(sv8.to<utf32>(buf32) == buf32 + L32);
+    CHECK(sv16.to<utf8>(buf8) == buf8 + L8);
+
+    // check range equals
+    CHECK(std::equal(s8, s8 + L8, buf8));
+    CHECK(std::equal(s16, s16 + L16, buf16));
+    CHECK(std::equal(s32, s32 + L32, buf32));
+}
+
+TEST_CASE("utf/stringview", "") {
+    typedef utf_traits<utf8> traits8;
+    typedef utf_traits<utf16> traits16;
+    typedef utf_traits<utf32> traits32;
+
+    SECTION("empty string", "") {
+        char buf8[] = {0};
+        char16_t buf16[] = {0};
+        char32_t buf32[] = {0};
+
+        stringview<utf8> sv8(buf8, buf8);
+        stringview<utf16> sv16(buf16, buf16);
+        stringview<utf32> sv32(buf32, buf32);
+        test_strings(u8"", u"", U"", 0);
+    }
+
+    char foo[2] = "\xf8";
+    (void) foo;
+    test_strings(u8"a", u"a", U"a", 1);
+    test_strings(u8"abc", u"abc", U"abc", 3);
+
+    test_strings(u8"\u00f8", u"\u00f8", U"\u00f8", 1);
+    test_strings(u8"\u00f8\u00f8", u"\u00f8\u00f8", U"\u00f8\u00f8", 2);
+    test_strings(u8"\U0001f4a9", u"\U0001f4a9", U"\U0001f4a9", 1);
+
+    test_strings(u8"a\U0001f4a9", u"a\U0001f4a9", U"a\U0001f4a9", 2);
+    test_strings(u8"\U0001f4a9a", u"\U0001f4a9a", U"\U0001f4a9a", 2);
+    test_strings(u8"a\U0001f4a9a", u"a\U0001f4a9a", U"a\U0001f4a9a", 3);
 }

@@ -260,23 +260,67 @@ namespace utf {
         stringview(const codeunit_type* first, const codeunit_type* last)
         : first(first), last(last) {}
 
-        bool validate() const;
+        bool validate() const {
+            typedef utf_traits<E> traits_t;
+            for (typename traits_t::codeunit_type* it = first;  it < last;) {
+                size_t len = traits_t::read_length(*it);
+                if (last - it < len) {
+                    return false;
+                }
+                if (!traits_t::validate(it, it + len)) {
+                    return false;
+                }
+                codepoint_type cp = traits_t::decode(it);
+                if (!validate_codepoint(cp)) {
+                    return false;
+                }
+                it += len;
+            }
+        }
 
-        size_t codepoints() const;
+        size_t codepoints() const {
+            size_t cps = 0;
+            for (const codeunit_type* ptr = first; ptr < last; ++cps) {
+                size_t len = utf_traits<E>::read_length(*ptr);
+                ptr += len;
+            }
+            return cps;
+        }
 
-        size_t bytes() const;
+        size_t bytes() const {
+            return codeunits() * sizeof(typename utf_traits<E>::codeunit_type);
+        }
 
         // length in source encoding
         template <typename EDest>
-        size_t bytes() const;
+        size_t bytes() const {
+            return codeunits<EDest>() * sizeof(typename utf_traits<EDest>::codeunit_type);
+        }
 
-        size_t codeunits() const;
+        size_t codeunits() const { return last - first; }
 
         template <typename EDest>
-        size_t codeunits() const;
+        size_t codeunits() const {
+            size_t cus = 0;
+            for (const codeunit_type* cur = first; cur < last;) {
+                size_t slen = utf_traits<E>::read_length(*cur);
+                // what's the codepoint in question? And how many code units is that in EDest?
+                codepoint_type cp = utf_traits<E>::decode(cur);
+                cur += slen;
+                size_t dlen = utf_traits<EDest>::write_length(cp);
+                cus += dlen;
+            }
+            return cus;
+        }
 
         template <typename EDest, typename OutIt>
-        OutIt to(OutIt dest) const;
+        OutIt to(OutIt dest) const {
+            for (const codeunit_type* cur = first; cur != last; cur += utf_traits<E>::read_length(*cur)) {
+                codepoint_type cp = utf_traits<E>::decode(cur);
+                dest = utf_traits<EDest>::encode(cp, dest);
+            }
+            return dest;
+        }
 
     private:
         const codeunit_type* const first;
