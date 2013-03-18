@@ -302,3 +302,176 @@ TEST_CASE("traits/utf8/validate", "Validate a utf-8 encoded character") {
         CHECK(traits_t::validate(buf, buf + elems(buf)));
     }
 }
+
+TEST_CASE( "traits/utf16/write_length", "Given a codepoint, compute its length if UTF-16 encoded") {
+    typedef utf_traits<utf16> traits_t;
+
+    CHECK(traits_t::write_length((codepoint_type)0x0000) == 1);
+    CHECK(traits_t::write_length((codepoint_type)0xd7ff) == 1);
+    CHECK(traits_t::write_length((codepoint_type)0xe000) == 1);
+    CHECK(traits_t::write_length((codepoint_type)0xffff) == 1);
+    CHECK(traits_t::write_length((codepoint_type)0x010000) == 2);
+    CHECK(traits_t::write_length((codepoint_type)0x10ffff) == 2);
+
+    SECTION("Code point in invalid range", "Code points in the range 0xd800-0xdfff are invalid") {
+        CHECK(traits_t::write_length((codepoint_type)0xd7ff) == 1);
+        CHECK(traits_t::write_length((codepoint_type)0xd800) == 0);
+        CHECK(traits_t::write_length((codepoint_type)0xdabc) == 0);
+        CHECK(traits_t::write_length((codepoint_type)0xdfff) == 0);
+        CHECK(traits_t::write_length((codepoint_type)0xe000) == 1);
+    }
+    SECTION("Code point value too big", "Code points must not have values greater than 0x10ffff") {
+        CHECK(traits_t::write_length((codepoint_type)0x110000) == 0);
+    }
+}
+
+TEST_CASE("traits/utf16/read_length", "Length of char subsequence according to its leading byte") {
+    typedef utf_traits<utf16> traits_t;
+    typedef traits_t::codeunit_type codeunit_t;
+
+    CHECK(traits_t::read_length((codeunit_t)0x0000) == 1);
+    CHECK(traits_t::read_length((codeunit_t)0xd7ff) == 1);
+    CHECK(traits_t::read_length((codeunit_t)0xe000) == 1);
+    CHECK(traits_t::read_length((codeunit_t)0xffff) == 1);
+    CHECK(traits_t::read_length((codeunit_t)0xd800) == 2);
+    CHECK(traits_t::read_length((codeunit_t)0xdbff) == 2);
+
+    SECTION("Trail surrogate", "") {
+        CHECK(traits_t::read_length((codeunit_t)0xdc00) == 1);
+        CHECK(traits_t::read_length((codeunit_t)0xdfff) == 1);
+    }
+
+    SECTION("Other types", "") {
+        CHECK(traits_t::read_length((uint16_t)0xd7ff) == 1);
+        CHECK(traits_t::read_length((int16_t)0xd7ff) == 1);
+    }
+}
+
+TEST_CASE("traits/utf16/encode", "UTF-16 encode a single codepoint") {
+    typedef utf_traits<utf16> traits_t;
+    typedef traits_t::codeunit_type codeunit_t;
+
+    std::vector<codeunit_t> buf;
+    SECTION("null", "encode a null byte") {
+        traits_t::encode(0x00, std::back_inserter(buf));
+
+        CHECK(buf.size() == 1);
+        CHECK(buf[0] == (codeunit_t)0x00);
+    }
+    SECTION("single code unit", "encode a BMP character") {
+        traits_t::encode(0x61, std::back_inserter(buf));
+
+        CHECK(buf.size() == 1);
+        CHECK(buf[0] == (codeunit_t)0x61);
+    }
+    SECTION("Surrogate pair", "encode a surrogate pair") {
+        traits_t::encode(0x10000, std::back_inserter(buf));
+
+        CHECK(buf.size() == 2);
+        CHECK(buf[0] == (codeunit_t)0xd800);
+        CHECK(buf[1] == (codeunit_t)0xdc00);
+    }
+    SECTION("returned iterator", "The return value should point just past the generated subsequence") {
+        buf.resize(2);
+        CHECK(traits_t::encode(0x1F4A9, buf.begin()) == buf.begin() + 2);
+    }
+
+    SECTION("encode to uint16_t", "") {
+        std::vector<uint16_t> buf;
+        traits_t::encode(0xd7ff, std::back_inserter(buf));
+
+        REQUIRE(buf.size() == 1);
+        CHECK(buf[0] == (uint16_t)0xd7ff);
+    }
+    SECTION("encode to int16_t", "") {
+        std::vector<int16_t> buf;
+        traits_t::encode(0xd7ff, std::back_inserter(buf));
+
+        REQUIRE(buf.size() == 1);
+        CHECK(buf[0] == (int16_t)0xd7ff);
+    }
+}
+
+TEST_CASE("traits/utf16/decode", "Read a UTF-16 encoded character") {
+    typedef utf_traits<utf16> traits_t;
+    typedef traits_t::codeunit_type codeunit_t;
+
+    SECTION("null", "decode a null byte") {
+        codeunit_t buf[] = {0x00};
+        CHECK(traits_t::decode(buf) == 0x0);
+    }
+    SECTION("1 code unit", "decode a BMP character") {
+        codeunit_t buf[] = {0x61};
+        CHECK(traits_t::decode(buf) == 0x61);
+    }
+    SECTION("surrogate pair", "decode a surrogate pair") {
+        {
+            codeunit_t buf[] = {0xd800, 0xdc00};
+            CHECK(traits_t::decode(buf) == 0x10000);
+        }
+        {
+            codeunit_t buf[] = {0xd83d, 0xdca9};
+            CHECK(traits_t::decode(buf) == 0x1f4a9);
+        }
+    }
+    SECTION("with uint16_t", "Should be able to decode from other 16-bit integers") {
+        uint16_t buf[] = {0xd800, 0xdc00};
+        CHECK(traits_t::decode(buf) == 0x10000);
+    }
+    SECTION("with int16_t", "Should be able to decode from other 16-bit integers") {
+        int16_t buf[] = {(int16_t)0xd800, (int16_t)0xdc00};
+        CHECK(traits_t::decode(buf) == 0x10000);
+    }
+}
+
+TEST_CASE("traits/utf16/validate", "Validate a UTF-16 encoded character") {
+    typedef utf_traits<utf16> traits_t;
+    typedef traits_t::codeunit_type codeunit_t;
+
+    SECTION("empty sequence is invalid", "") {
+        codeunit_t buf[] = {0x00};
+        CHECK(!traits_t::validate(buf, buf));
+    }
+    SECTION("Valid null-byte", "") {
+        codeunit_t buf[] = {0x00};
+        CHECK(traits_t::validate(buf, buf + elems(buf)));
+    }
+    SECTION("Valid BMP", "") {
+        codeunit_t buf[] = {0x61};
+        CHECK(traits_t::validate(buf, buf + elems(buf)));
+    }
+    SECTION("Valid surrogate pair", "") {
+        codeunit_t buf[] = {0xd83d, 0xdca9};
+        CHECK(traits_t::validate(buf, buf + elems(buf)));
+    }
+    SECTION("Trail surrogate", "") {
+        codeunit_t buf[] = {0xdca9, 0xd83d};
+        CHECK(!traits_t::validate(buf, buf+5));
+    }
+    SECTION("Too many bytes", "Pass in a valid character, along with extra padding") {
+        {
+            codeunit_t buf[] = {0x0061, 0x0000};
+            CHECK(!traits_t::validate(buf, buf + elems(buf)));
+        }
+        {
+            codeunit_t buf[] = {0xd83d, 0xdca9, 0x0000};
+            CHECK(!traits_t::validate(buf, buf + elems(buf)));
+        }
+    }
+    SECTION("Surrogate pair without trail surrogate", "") {
+        codeunit_t buf[] = {0xd83d, 0xdca9};
+        CHECK(!traits_t::validate(buf, buf+1));
+    }
+    SECTION("Surrogate pair with bad trail surrogate", "") {
+        codeunit_t buf[] = {0xd83d, 0x61};
+        CHECK(!traits_t::validate(buf, buf + elems(buf)));
+    }
+    SECTION("int16_t", "") {
+        int16_t buf[] = {(int16_t)0xd83d, (int16_t)0xdca9};
+        CHECK(traits_t::validate(buf, buf + elems(buf)));
+    }
+    SECTION("uint16_t", "") {
+        uint16_t buf[] = {0xd83d, 0xdca9};
+        CHECK(traits_t::validate(buf, buf + elems(buf)));
+    }
+}

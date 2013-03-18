@@ -138,18 +138,81 @@ namespace utf {
     template <>
     struct utf_traits<utf16> {
         typedef char16_t codeunit_type;
-        static size_t read_length(codeunit_type c) { return size_t(); }
+        static size_t read_length(codeunit_type c) {
+            if (c < 0xd800) { return 1; }
+            if (c < 0xdc00) { return 2; }
+            if (c < 0x010000) { return 1; }
+            return 1;
+        }
+        static size_t write_length(codepoint_type c) {
+            if (c < 0xd800) { return 1; }
+            if (c < 0xe000) { return 0; }
+            if (c < 0x010000) { return 1; }
+            if (c < 0x110000) { return 2; }
 
-        static size_t write_length(codepoint_type c) { return size_t(); }
+            return 0;
+        }
 
         template <typename T>
-        static bool validate(const T* first, const T* last) { return bool(); }
-
+        static bool validate(const T* first, const T* last) {
+            size_t len = last - first;
+            switch (len) {
+                case 1:
+                {
+                    uint16_t lead = *first;
+                    if (lead >= 0xd800 && lead < 0xe000) { return false; }
+                    break;
+                }
+                case 2:
+                {
+                    uint16_t lead = first[0];
+                    uint16_t trail = first[1];
+                    if (lead < 0xd800 || lead >= 0xdc00) { return false; }
+                    if (trail < 0xdc00 || trail >= 0xe000) { return false; }
+                    break;
+                }
+                default:
+                    return false;
+            }
+            return true;
+        }
         template <typename OutIt>
-        static OutIt encode(codepoint_type c, OutIt dest) { return dest; }
+        static OutIt encode(codepoint_type c, OutIt dest) {
+            size_t len = write_length(c);
+
+            if (len == 1) {
+                *dest = c;
+                ++dest;
+                return dest;
+            }
+
+            // 20-bit intermediate value
+            size_t tmp = c - 0x10000;
+
+            *dest = static_cast<char16_t>((tmp >> 10) + 0xd800);
+            ++dest;
+            *dest = static_cast<char16_t>((tmp & 0x03ff) + 0xdc00);
+            ++dest;
+            return dest;
+        }
 
         template <typename T>
-        static codepoint_type decode(const T* c) { return codepoint_type(); }
+        static codepoint_type decode(const T* c) {
+            size_t len = read_length(*c);
+
+            char16_t lead = *c;
+            if (len == 1) {
+                return lead;
+            }
+
+            codepoint_type res = 0;
+            // 10 most significant bits
+            res = (lead - 0xd800) << 10;
+            uint16_t trail = c[1];
+            // 10 least significant bits
+            res +=  (trail - 0xdc00);
+            return res + 0x10000;
+        }
     };
 }
 #endif
