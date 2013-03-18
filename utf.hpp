@@ -252,5 +252,35 @@ namespace utf {
             return *c;
         }
     };
+
+    template <typename E>
+    struct stringview {
+        typedef typename utf_traits<E>::codeunit_type codeunit_type;
+
+        stringview(const codeunit_type* first, const codeunit_type* last)
+        : first(first), last(last) {}
+
+        bool validate() const;
+
+        size_t codepoints() const;
+
+        size_t bytes() const;
+
+        // length in source encoding
+        template <typename EDest>
+        size_t bytes() const;
+
+        size_t codeunits() const;
+
+        template <typename EDest>
+        size_t codeunits() const;
+
+        template <typename EDest, typename OutIt>
+        OutIt to(OutIt dest) const;
+
+    private:
+        const codeunit_type* const first;
+        const codeunit_type* const last;
+    };
 }
 #endif
