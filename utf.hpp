@@ -7,6 +7,7 @@
 namespace utf {
     struct utf8;
     struct utf16;
+    struct utf32;
 
     typedef char32_t codepoint_type;
 
@@ -213,6 +214,23 @@ namespace utf {
             res +=  (trail - 0xdc00);
             return res + 0x10000;
         }
+    };
+
+    template <>
+    struct utf_traits<utf32> {
+        typedef char32_t codeunit_type;
+        static size_t read_length(codeunit_type c) { return size_t(); }
+
+        static size_t write_length(codepoint_type c) { return size_t(); }
+
+        template <typename T>
+        static bool validate(const T* first, const T* last) { return bool(); }
+
+        template <typename OutIt>
+        static OutIt encode(codepoint_type c, OutIt dest) { return dest; }
+
+        template <typename T>
+        static codepoint_type decode(const T* c) { return codepoint_type(); }
     };
 }
 #endif
