@@ -1,0 +1,20 @@
+#include <vector>
+#include <iostream>
+
+#include "utf.hpp"
+
+int main() {
+    const char str[] = "hello world";
+    utf::stringview<utf::utf8> sv(str, str + sizeof(str));
+    std::cout << "number of code units: " << sv.codeunits() << '\n';
+    std::cout << "byte length: " << sv.bytes() << '\n';
+    std::cout << "byte length as utf16: " << sv.bytes<utf::utf16>() << '\n';
+    std::vector<char16_t> buf(sv.codeunits<utf::utf16>(), 0);
+    sv.to<utf::utf16>(buf.begin());
+    std::cout << "utf16 code units: ";
+    for (char16_t c : buf) {
+        std::cout << std::hex << (uint16_t)c << ' ';
+    }
+    std::cout << '\n';
+    
+}
