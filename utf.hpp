@@ -219,18 +219,30 @@ namespace utf {
     template <>
     struct utf_traits<utf32> {
         typedef char32_t codeunit_type;
-        static size_t read_length(codeunit_type c) { return size_t(); }
-
-        static size_t write_length(codepoint_type c) { return size_t(); }
+        static size_t read_length(codeunit_type c) { return 1; }
+        static size_t write_length(codepoint_type c) {
+            if (c < 0xd800) { return 1; }
+            if (c < 0xe000) { return 0; }
+            if (c < 0x110000) { return 1; }
+            return 0;
+        }
 
         template <typename T>
-        static bool validate(const T* first, const T* last) { return bool(); }
+        static bool validate(const T* first, const T* last) {
+            // actually looking at the cp value is done by free validate function.
+            return last - first == 1;
+        }
 
         template <typename OutIt>
-        static OutIt encode(codepoint_type c, OutIt dest) { return dest; }
-
+        static OutIt encode(codepoint_type c, OutIt dest) {
+            *dest = c;
+            ++dest;
+            return dest;
+        }
         template <typename T>
-        static codepoint_type decode(const T* c) { return codepoint_type(); }
+        static codepoint_type decode(const T* c) {
+            return *c;
+        }
     };
 }
 #endif
