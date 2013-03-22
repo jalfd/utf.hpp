@@ -690,19 +690,68 @@ TEST_CASE("utf/stringview", "") {
         stringview<utf8> sv8(buf8, buf8);
         stringview<utf16> sv16(buf16, buf16);
         stringview<utf32> sv32(buf32, buf32);
-        test_strings(u8"", u"", U"", 0);
+        //test_strings(u8"", u"", U"", 0);
+        char u8[] = {0};
+        char16_t u16[] = {0};
+        char32_t u32[] = {0};
+        test_strings(u8, u16, u32, 0);
     }
 
-    char foo[2] = "\xf8";
-    (void) foo;
-    test_strings(u8"a", u"a", U"a", 1);
-    test_strings(u8"abc", u"abc", U"abc", 3);
+    //test_strings(u8"a", u"a", U"a", 1);
+    {
+        char u8[] = {0x61, 0};
+        char16_t u16[] = {0x61, 0};
+        char32_t u32[] = {0x61,	0};
+        test_strings(u8, u16, u32, 1);
+    }
 
-    test_strings(u8"\u00f8", u"\u00f8", U"\u00f8", 1);
-    test_strings(u8"\u00f8\u00f8", u"\u00f8\u00f8", U"\u00f8\u00f8", 2);
-    test_strings(u8"\U0001f4a9", u"\U0001f4a9", U"\U0001f4a9", 1);
-
-    test_strings(u8"a\U0001f4a9", u"a\U0001f4a9", U"a\U0001f4a9", 2);
-    test_strings(u8"\U0001f4a9a", u"\U0001f4a9a", U"\U0001f4a9a", 2);
-    test_strings(u8"a\U0001f4a9a", u"a\U0001f4a9a", U"a\U0001f4a9a", 3);
+    //test_strings(u8"abc", u"abc", U"abc", 3);
+    {
+        char u8[] = {0x61, 0x62, 0x63, 0};
+        char16_t u16[] = {0x61, 0x62, 0x63, 0};
+        char32_t u32[] = {0x61, 0x62, 0x63,	0};
+        test_strings(u8, u16, u32, 3);
+    }
+    //test_strings(u8"\u00f8", u"\u00f8", U"\u00f8", 1);
+    {
+        char u8[] = {(char)0xc3, (char)0xb8, 0};
+        char16_t u16[] = {0xf8, 0};
+        char32_t u32[] = {0xf8,	0};
+        test_strings(u8, u16, u32, 1);
+    }
+    //test_strings(u8"\u00f8\u00f8", u"\u00f8\u00f8", U"\u00f8\u00f8", 2);
+    {
+        char u8[] = {(char)0xc3, (char)0xb8, (char)0xc3, (char)0xb8, 0};
+        char16_t u16[] = {0xf8, 0xf8, 0};
+        char32_t u32[] = {0xf8,	0xf8, 0};
+        test_strings(u8, u16, u32, 2);
+    }
+    //test_strings(u8"\U0001f4a9", u"\U0001f4a9", U"\U0001f4a9", 1);
+    {
+        char u8[] = {(char)0xf0, (char)0x9f, (char)0x92, (char)0xa9, 0};
+        char16_t u16[] = {0xd83d, 0xdca9, 0};
+        char32_t u32[] = {0x1f4a9, 0};
+        test_strings(u8, u16, u32, 1);
+    }
+    //test_strings(u8"a\U0001f4a9", u"a\U0001f4a9", U"a\U0001f4a9", 2);
+    {
+        char u8[] = {(char)0x61, (char)0xf0, (char)0x9f, (char)0x92, (char)0xa9, 0};
+        char16_t u16[] = {0x61, 0xd83d, 0xdca9, 0};
+        char32_t u32[] = {0x61, 0x1f4a9, 0};
+        test_strings(u8, u16, u32, 2);
+    }
+    //test_strings(u8"\U0001f4a9a", u"\U0001f4a9a", U"\U0001f4a9a", 2);
+    {
+        char u8[] = {(char)0xf0, (char)0x9f, (char)0x92, (char)0xa9, (char)0x61, 0};
+        char16_t u16[] = {0xd83d, 0xdca9, 0x61, 0};
+        char32_t u32[] = {0x1f4a9, 0x61, 0};
+        test_strings(u8, u16, u32, 2);
+    }
+    //test_strings(u8"a\U0001f4a9a", u"a\U0001f4a9a", U"a\U0001f4a9a", 3);
+    {
+        char u8[] = {(char)0x61, (char)0xf0, (char)0x9f, (char)0x92, (char)0xa9, (char)0x61, 0};
+        char16_t u16[] = {0x61, 0xd83d, 0xdca9, 0x61, 0};
+        char32_t u32[] = {0x61, 0x1f4a9, 0x61, 0};
+        test_strings(u8, u16, u32, 3);
+    }
 }

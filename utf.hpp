@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <cassert>
+#include <cstdint>
 
 namespace utf {
     struct utf8;
@@ -67,7 +68,7 @@ namespace utf {
             }
 
             for (size_t i = 1; i < len; ++i) {
-                unsigned char c = first[i];
+                unsigned char c = static_cast<unsigned char>(first[i]);
                 if ((c & 0xc0) != 0x80) { return false; }
             }
 
@@ -123,7 +124,7 @@ namespace utf {
 
         template <typename T>
         static codepoint_type decode(const T* c) {
-            size_t len = read_length(*c);
+            size_t len = read_length(static_cast<codeunit_type>(*c));
 
             codepoint_type res = 0;
             // switch on first byte

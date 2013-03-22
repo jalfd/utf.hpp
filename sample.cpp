@@ -12,8 +12,8 @@ int main() {
     std::vector<char16_t> buf(sv.codeunits<utf::utf16>(), 0);
     sv.to<utf::utf16>(buf.begin());
     std::cout << "utf16 code units: ";
-    for (char16_t c : buf) {
-        std::cout << std::hex << (uint16_t)c << ' ';
+    for (std::vector<char16_t>::iterator c = buf.begin(); c != buf.end(); ++c) {
+    std::cout << std::hex << (uint16_t)*c << ' ';
     }
     std::cout << '\n';
     
