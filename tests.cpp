@@ -682,6 +682,24 @@ TEST_CASE("utf/stringview", "") {
     typedef utf_traits<utf16> traits16;
     typedef utf_traits<utf32> traits32;
 
+    SECTION("types", "Should be able to instantiate strings from all relevant datatypes") {
+        char buf8[] = {0};
+        char16_t buf16[] = {0};
+        char32_t buf32[] = {0};
+
+        stringview<utf8>((char*)buf8, (char*)buf8);
+        stringview<utf8, signed char*>((signed char*)buf8, (signed char*)buf8);
+        stringview<utf8, unsigned char*>((unsigned char*)buf8, (unsigned char*)buf8);
+
+        stringview<utf16>((char16_t*)buf16, (char16_t*)buf16);
+        stringview<utf16, uint16_t*>((uint16_t*)buf16, (uint16_t*)buf16);
+        stringview<utf16, int16_t*>((int16_t*)buf16, (int16_t*)buf16);
+
+        stringview<utf32>((char32_t*)buf32, (char32_t*)buf32);
+        stringview<utf32, uint32_t*>((uint32_t*)buf32, (uint32_t*)buf32);
+        stringview<utf32, int32_t*>((int32_t*)buf32, (int32_t*)buf32);
+    }
+
     SECTION("empty string", "") {
         char buf8[] = {0};
         char16_t buf16[] = {0};
@@ -754,4 +772,13 @@ TEST_CASE("utf/stringview", "") {
         char32_t u32[] = {0x61, 0x1f4a9, 0x61, 0};
         test_strings(u8, u16, u32, 3);
     }
+}
+
+TEST_CASE("utf/string_view/iterator-based", "Create a stringview based on an iterator range") {
+    std::string str = "hello world";
+    stringview<utf8, std::string::const_iterator> sv(str.begin(), str.end());
+    CHECK(sv.codepoints() == 11);
+    CHECK(sv.bytes<utf16>() == 22);
+    CHECK(sv.codeunits() == 11);
+    sv.validate();
 }

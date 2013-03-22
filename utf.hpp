@@ -4,10 +4,11 @@
 #include <cstddef>
 #include <cassert>
 #include <cstdint>
+#include <iterator>
 
 namespace utf {
     struct utf8;
-    struct utf16;
+    struct utf16; // uses native endianness
     struct utf32;
 
     typedef char32_t codepoint_type;
@@ -46,8 +47,8 @@ namespace utf {
         }
 
         // responsible only for validating the utf8 encoded subsequence, not the codepoint it maps to
-        template <typename T>
-        static bool validate(const T* first, const T* last) {
+        template <typename Iter>
+        static bool validate(Iter first, Iter last) {
             size_t len = last - first;
             unsigned char lead = (unsigned char)*first;
             switch (len) {
@@ -122,8 +123,8 @@ namespace utf {
             return dest;
         }
 
-        template <typename T>
-        static codepoint_type decode(const T* c) {
+        template <typename Iter>
+        static codepoint_type decode(Iter c) {
             size_t len = read_length(static_cast<codeunit_type>(*c));
 
             codepoint_type res = 0;
@@ -163,8 +164,8 @@ namespace utf {
             return 0;
         }
 
-        template <typename T>
-        static bool validate(const T* first, const T* last) {
+        template <typename Iter>
+        static bool validate(Iter first, Iter last) {
             size_t len = last - first;
             switch (len) {
                 case 1:
@@ -206,8 +207,8 @@ namespace utf {
             return dest;
         }
 
-        template <typename T>
-        static codepoint_type decode(const T* c) {
+        template <typename Iter>
+        static codepoint_type decode(Iter c) {
             size_t len = read_length(*c);
 
             char16_t lead = *c;
@@ -248,24 +249,24 @@ namespace utf {
             ++dest;
             return dest;
         }
-        template <typename T>
-        static codepoint_type decode(const T* c) {
+        template <typename Iter>
+        static codepoint_type decode(Iter c) {
             return *c;
         }
     };
 
-    template <typename E>
+    template <typename E, typename Iter = const typename utf_traits<E>::codeunit_type*>
     struct stringview {
         typedef typename utf_traits<E>::codeunit_type codeunit_type;
 
-        stringview(const codeunit_type* first, const codeunit_type* last)
+        stringview(const Iter first, const Iter last)
         : first(first), last(last) {}
 
         bool validate() const {
             typedef utf_traits<E> traits_t;
-            for (typename traits_t::codeunit_type* it = first;  it < last;) {
+            for (Iter it = first;  it < last;) {
                 size_t len = traits_t::read_length(*it);
-                if (last - it < len) {
+                if (last - it < static_cast<ptrdiff_t>(len)) {
                     return false;
                 }
                 if (!traits_t::validate(it, it + len)) {
@@ -277,11 +278,12 @@ namespace utf {
                 }
                 it += len;
             }
+            return true;
         }
 
         size_t codepoints() const {
             size_t cps = 0;
-            for (const codeunit_type* ptr = first; ptr < last; ++cps) {
+            for (Iter ptr = first; ptr < last; ++cps) {
                 size_t len = utf_traits<E>::read_length(*ptr);
                 ptr += len;
             }
@@ -303,7 +305,7 @@ namespace utf {
         template <typename EDest>
         size_t codeunits() const {
             size_t cus = 0;
-            for (const codeunit_type* cur = first; cur < last;) {
+            for (Iter cur = first; cur < last;) {
                 size_t slen = utf_traits<E>::read_length(*cur);
                 // what's the codepoint in question? And how many code units is that in EDest?
                 codepoint_type cp = utf_traits<E>::decode(cur);
@@ -316,7 +318,7 @@ namespace utf {
 
         template <typename EDest, typename OutIt>
         OutIt to(OutIt dest) const {
-            for (const codeunit_type* cur = first; cur != last; cur += utf_traits<E>::read_length(*cur)) {
+            for (Iter cur = first; cur != last; cur += utf_traits<E>::read_length(*cur)) {
                 codepoint_type cp = utf_traits<E>::decode(cur);
                 dest = utf_traits<EDest>::encode(cp, dest);
             }
@@ -324,8 +326,8 @@ namespace utf {
         }
 
     private:
-        const codeunit_type* const first;
-        const codeunit_type* const last;
+        const Iter first;
+        const Iter last;
     };
 }
 #endif
