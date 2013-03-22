@@ -1,6 +1,7 @@
 #include <vector>
 #include <iostream>
-
+#include <iterator>
+#include <string>
 #include "utf.hpp"
 
 int main() {
@@ -17,4 +18,13 @@ int main() {
     }
     std::cout << '\n';
     
+    std::string s = "hello world";
+
+    utf::make_stringview(s.begin(), s.end());
+
+    const wchar_t* str2 = L"hell\xf8 world";
+    auto sv2 = utf::make_stringview(str2, str2 + 11);
+    std::string v;
+    sv2.to<utf::utf8>(std::back_inserter(v));
+    std::cout << v;
 }
