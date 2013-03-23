@@ -701,7 +701,7 @@ TEST_CASE("utf/stringview", "") {
     {
         char u8[] = {0x61, 0};
         char16_t u16[] = {0x61, 0};
-        char32_t u32[] = {0x61,	0};
+        char32_t u32[] = {0x61, 0};
         test_strings(u8, u16, u32, 1);
     }
 
@@ -709,21 +709,21 @@ TEST_CASE("utf/stringview", "") {
     {
         char u8[] = {0x61, 0x62, 0x63, 0};
         char16_t u16[] = {0x61, 0x62, 0x63, 0};
-        char32_t u32[] = {0x61, 0x62, 0x63,	0};
+        char32_t u32[] = {0x61, 0x62, 0x63, 0};
         test_strings(u8, u16, u32, 3);
     }
     //test_strings(u8"\u00f8", u"\u00f8", U"\u00f8", 1);
     {
         char u8[] = {(char)0xc3, (char)0xb8, 0};
         char16_t u16[] = {0xf8, 0};
-        char32_t u32[] = {0xf8,	0};
+        char32_t u32[] = {0xf8, 0};
         test_strings(u8, u16, u32, 1);
     }
     //test_strings(u8"\u00f8\u00f8", u"\u00f8\u00f8", U"\u00f8\u00f8", 2);
     {
         char u8[] = {(char)0xc3, (char)0xb8, (char)0xc3, (char)0xb8, 0};
         char16_t u16[] = {0xf8, 0xf8, 0};
-        char32_t u32[] = {0xf8,	0xf8, 0};
+        char32_t u32[] = {0xf8, 0xf8, 0};
         test_strings(u8, u16, u32, 2);
     }
     //test_strings(u8"\U0001f4a9", u"\U0001f4a9", U"\U0001f4a9", 1);
