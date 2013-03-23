@@ -10,6 +10,16 @@ using namespace utf;
 namespace {
     template <typename T, size_t N>
     size_t elems(const T(&arr)[N]) { return N; }
+    
+    template <typename L, typename R>
+    struct equal_types {
+        static const bool value = false;
+    };
+    
+    template <typename T>
+    struct equal_types<T, T> {
+        static const bool value = true;
+    };
 }
 
 TEST_CASE("traits/utf8/write_length", "Given a codepoint, compute its length if UTF-8 encoded") {
@@ -781,4 +791,52 @@ TEST_CASE("utf/string_view/iterator-based", "Create a stringview based on an ite
     CHECK(sv.bytes<utf16>() == 22);
     CHECK(sv.codeunits() == 11);
     sv.validate();
+}
+
+TEST_CASE("utf/encoding_for_size", "") {
+    CHECK((equal_types<encoding_for_size<1>::type, utf8>::value));
+    CHECK((equal_types<encoding_for_size<2>::type, utf16>::value));
+    CHECK((equal_types<encoding_for_size<4>::type, utf32>::value));
+}
+TEST_CASE("utf/native_encoding", "") {
+    CHECK((equal_types<native_encoding<char>::type, utf8>::value));
+    CHECK((equal_types<native_encoding<signed char>::type, utf8>::value));
+    CHECK((equal_types<native_encoding<unsigned char>::type, utf8>::value));
+    CHECK((equal_types<native_encoding<const char>::type, utf8>::value));
+    
+    CHECK((equal_types<native_encoding<char16_t>::type, utf16>::value));
+    CHECK((equal_types<native_encoding<uint16_t>::type, utf16>::value));
+    CHECK((equal_types<native_encoding<int16_t>::type, utf16>::value));
+    CHECK((equal_types<native_encoding<const char16_t>::type, utf16>::value));
+
+    CHECK((equal_types<native_encoding<char32_t>::type, utf32>::value));
+    CHECK((equal_types<native_encoding<uint32_t>::type, utf32>::value));
+    CHECK((equal_types<native_encoding<int32_t>::type, utf32>::value));
+    CHECK((equal_types<native_encoding<const char32_t>::type, utf32>::value));
+    
+    if (sizeof(wchar_t) == 2) {
+        CHECK((equal_types<native_encoding<wchar_t>::type, utf16>::value));
+    }
+    else if (sizeof(wchar_t) == 4) {
+        CHECK((equal_types<native_encoding<wchar_t>::type, utf32>::value));
+    }
+}
+
+TEST_CASE("utf/make_stringview", "check that make_stringview produces stringviews of the correct types") {
+    const char c = 'c';
+    stringview<utf8, const char*> sv1 = make_stringview(&c, &c);
+    (void)sv1;
+
+    std::string str = "hello";
+    stringview<utf8, std::string::iterator> sv2 = make_stringview(str.begin(), str.end());
+    (void)sv2;
+
+    std::vector<int16_t> s16;
+    stringview<utf16, std::vector<int16_t>::iterator> sv3 = make_stringview(s16.begin(), s16.end());
+    (void)sv3;
+
+    std::vector<uint32_t> s32;
+    stringview<utf32, std::vector<uint32_t>::iterator> sv4 = make_stringview(s32.begin(), s32.end());
+    (void)sv4;
+
 }

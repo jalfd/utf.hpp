@@ -329,5 +329,37 @@ namespace utf {
         const Iter first;
         const Iter last;
     };
+
+    template <size_t S>
+    struct encoding_for_size;
+    
+    template <>
+    struct encoding_for_size<1> {
+        typedef utf8 type;
+    };
+    template <>
+    struct encoding_for_size<2> {
+        typedef utf16 type;
+    };
+    template <>
+    struct encoding_for_size<4> {
+        typedef utf32 type;
+    };
+    template <typename T>
+    struct native_encoding {
+        typedef typename encoding_for_size<sizeof(T)>::type type;
+    };
+
+    // convenience stuff
+    template <typename T, size_t N>
+    stringview<typename native_encoding<T>::type> make_stringview(T (&arr)[N]) {
+        return stringview<typename native_encoding<T>::type>(arr, arr + N);
+    }
+
+    template <typename Iter>
+    stringview<typename native_encoding<typename std::iterator_traits<Iter>::value_type>::type, Iter>
+    make_stringview(Iter first, Iter last) {
+        return stringview<typename native_encoding<typename std::iterator_traits<Iter>::value_type>::type, Iter>(first, last);
+    }
 }
 #endif
