@@ -11,6 +11,14 @@ namespace utf {
 
     typedef char32_t codepoint_type;
 
+    bool validate_codepoint(codepoint_type c) {
+        if (c < 0xd800) { return true; }
+        if (c < 0xe000) { return false; }
+        if (c < 0x110000) { return true; }
+
+        return false;
+    }
+
     template <typename E>
     struct utf_traits;
 

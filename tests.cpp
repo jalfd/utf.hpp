@@ -601,3 +601,17 @@ TEST_CASE("traits/utf32/validate", "Validate a UTF-32 encoded character") {
         CHECK(traits_t::validate(buf, buf + elems(buf)));
     }
 }
+
+TEST_CASE("validate_codepoint", "") {
+    CHECK(validate_codepoint(0x0));
+    CHECK(validate_codepoint(0x61));
+    CHECK(validate_codepoint(0xd7ff));
+    CHECK(!validate_codepoint(0xd800));
+    CHECK(!validate_codepoint(0xdc00));
+    CHECK(!validate_codepoint(0xdfff));
+    CHECK(validate_codepoint(0xe000));
+    CHECK(validate_codepoint(0x1000));
+    CHECK(validate_codepoint(0x10000));
+    CHECK(validate_codepoint(0x10ffff));
+    CHECK(!validate_codepoint(0x110000));
+}
