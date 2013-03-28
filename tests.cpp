@@ -6,6 +6,7 @@
 #include "utf.hpp"
 
 using namespace utf;
+using namespace utf::internal;
 
 namespace {
     template <typename T, size_t N>
