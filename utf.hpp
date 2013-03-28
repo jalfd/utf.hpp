@@ -340,12 +340,7 @@ namespace utf {
         }
 
         size_t codepoints() const {
-            size_t cps = 0;
-            for (Iter ptr = first; ptr < last; ++cps) {
-                size_t len = utf_traits<E>::read_length(*ptr);
-                ptr += len;
-            }
-            return cps;
+            return std::distance(begin(), end());
         }
 
         size_t bytes() const {
@@ -363,22 +358,16 @@ namespace utf {
         template <typename EDest>
         size_t codeunits() const {
             size_t cus = 0;
-            for (Iter cur = first; cur < last;) {
-                size_t slen = utf_traits<E>::read_length(*cur);
-                // what's the codepoint in question? And how many code units is that in EDest?
-                codepoint_type cp = utf_traits<E>::decode(cur);
-                cur += slen;
-                size_t dlen = utf_traits<EDest>::write_length(cp);
-                cus += dlen;
+            for (codepoint_iterator<Iter> it = begin(); it != end(); ++it) {
+                cus += utf_traits<EDest>::write_length(*it);
             }
             return cus;
         }
 
         template <typename EDest, typename OutIt>
         OutIt to(OutIt dest) const {
-            for (Iter cur = first; cur != last; cur += utf_traits<E>::read_length(*cur)) {
-                codepoint_type cp = utf_traits<E>::decode(cur);
-                dest = utf_traits<EDest>::encode(cp, dest);
+            for (codepoint_iterator<Iter> it = begin(); it != end(); ++it) {
+                dest = utf_traits<EDest>::encode(*it, dest);
             }
             return dest;
         }
