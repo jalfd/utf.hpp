@@ -13,6 +13,26 @@ namespace utf {
 
     typedef char32_t codepoint_type;
 
+    template <size_t S>
+    struct encoding_for_size;
+    
+    template <>
+    struct encoding_for_size<1> {
+        typedef utf8 type;
+    };
+    template <>
+    struct encoding_for_size<2> {
+        typedef utf16 type;
+    };
+    template <>
+    struct encoding_for_size<4> {
+        typedef utf32 type;
+    };
+    template <typename T>
+    struct native_encoding {
+        typedef typename encoding_for_size<sizeof(T)>::type type;
+    };
+    
     bool validate_codepoint(codepoint_type c) {
         if (c < 0xd800) { return true; }
         if (c < 0xe000) { return false; }
@@ -254,6 +274,41 @@ namespace utf {
             return *c;
         }
     };
+    
+    template <typename It>
+    class codepoint_iterator : public std::iterator<std::input_iterator_tag
+    , const codepoint_type, ptrdiff_t
+    , const codepoint_type*
+    , const codepoint_type&> {
+        typedef typename std::iterator_traits<It>::value_type codeunit_type;
+        typedef typename native_encoding<codeunit_type>::type encoding;
+        typedef utf_traits<encoding> traits_type;
+        codepoint_type val;
+        It pos;
+
+    public:
+        explicit codepoint_iterator() : val(), pos() {}
+        explicit codepoint_iterator(It pos) : val(), pos(pos) {}
+        codepoint_iterator(const codepoint_iterator& it) : val(it.val), pos(it.pos) {}
+
+        typename std::iterator_traits<codepoint_iterator>::reference operator*() {
+            val = traits_type::decode(pos);
+            return val;
+        }
+        typename std::iterator_traits<codepoint_iterator>::pointer operator->() const { return (&**this); }
+        codepoint_iterator& operator++() {
+            It next = pos + traits_type::read_length(*pos);
+            pos = next;
+            return *this;
+		}
+        codepoint_iterator operator++(int) {
+            codepoint_type tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+        friend bool operator != (codepoint_iterator lhs, codepoint_iterator rhs) { return lhs.pos != rhs.pos; }
+        friend bool operator == (codepoint_iterator lhs, codepoint_iterator rhs) { return !(lhs != rhs); }
+    };
 
     template <typename E, typename Iter = const typename utf_traits<E>::codeunit_type*>
     struct stringview {
@@ -262,6 +317,9 @@ namespace utf {
         stringview(const Iter first, const Iter last)
         : first(first), last(last) {}
 
+        codepoint_iterator<Iter> begin() const { return codepoint_iterator<Iter>(first); }
+        codepoint_iterator<Iter> end() const { return codepoint_iterator<Iter>(last); }
+        
         bool validate() const {
             typedef utf_traits<E> traits_t;
             for (Iter it = first;  it < last;) {
@@ -330,26 +388,6 @@ namespace utf {
         const Iter last;
     };
 
-    template <size_t S>
-    struct encoding_for_size;
-    
-    template <>
-    struct encoding_for_size<1> {
-        typedef utf8 type;
-    };
-    template <>
-    struct encoding_for_size<2> {
-        typedef utf16 type;
-    };
-    template <>
-    struct encoding_for_size<4> {
-        typedef utf32 type;
-    };
-    template <typename T>
-    struct native_encoding {
-        typedef typename encoding_for_size<sizeof(T)>::type type;
-    };
-
     // convenience stuff
     template <typename T, size_t N>
     stringview<typename native_encoding<T>::type> make_stringview(T (&arr)[N]) {
@@ -362,4 +400,5 @@ namespace utf {
         return stringview<typename native_encoding<typename std::iterator_traits<Iter>::value_type>::type, Iter>(first, last);
     }
 }
+
 #endif

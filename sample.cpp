@@ -27,4 +27,10 @@ int main() {
     std::string v;
     sv2.to<utf::utf8>(std::back_inserter(v));
     std::cout << v;
+    
+    auto svx = utf::make_stringview(buf.begin(), buf.end());
+    std::cout << std::dec << svx.codepoints() << '!';
+    for (utf::codepoint_iterator<std::vector<char16_t>::iterator> it = svx.begin(); it != svx.end(); ++it) {
+        std::cout << std::hex << (unsigned)*it << ',';
+    }
 }

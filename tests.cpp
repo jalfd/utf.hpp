@@ -840,3 +840,62 @@ TEST_CASE("utf/make_stringview", "check that make_stringview produces stringview
     (void)sv4;
 
 }
+
+TEST_CASE("utf/codepoint_iterator", "iterators for decoding a string on the fly") {
+    const char str[] = {
+        (char)0xf0, (char)0x9f, (char)0x92, (char)0xa9
+        , (char)0x20
+        , (char)0xe2, (char)0x82, (char)0xac
+        , (char)0x20
+        , (char)0xc3, (char)0xb8
+        , (char)0x20
+        , (char)0x61
+        , (char)0x00};
+    
+    codepoint_iterator<const char*> first = codepoint_iterator<const char*>(str);
+    codepoint_iterator<const char*> last = codepoint_iterator<const char*>(str + elems(str));
+
+    REQUIRE(std::distance(first, last) == 8);
+
+    codepoint_iterator<const char*> it = first;
+    
+    SECTION("copy construction", "") {
+        CHECK(it == first);
+    }
+    SECTION("assignment", "") {
+        codepoint_iterator<const char*> tmp;
+        tmp = it;
+        
+        CHECK(tmp == it);
+    }
+    SECTION("multipass", "") {
+        codepoint_iterator<const char*> tmp(it);
+        ++it;
+        ++tmp;
+        CHECK(it == tmp);
+        CHECK(*it == *tmp);
+    }
+    SECTION("multiple reads", "") {
+        CHECK(*it == 0x1f4a9);
+        CHECK(*it == 0x1f4a9);        
+    }
+    SECTION("increment and deref", "") {
+        CHECK(*it == 0x1f4a9);
+        ++it;
+        CHECK(*it == 0x20);
+        ++it;
+        CHECK(*it == 0x20ac);
+        ++it;
+        CHECK(*it == 0x20);
+        ++it;
+        CHECK(*it == 0xf8);
+        ++it;
+        CHECK(*it == 0x20);
+        ++it;
+        CHECK(*it == 0x61);
+        ++it;
+        CHECK(*it == 0x00);
+        ++it;
+        CHECK(it == last);
+    }
+}
