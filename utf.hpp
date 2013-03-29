@@ -9,8 +9,15 @@
 
 #include <cstddef>
 #include <cassert>
-#include <cstdint>
+#include <stdint.h>
 #include <iterator>
+
+#ifdef UTFHPP_NO_CPP11
+namespace utf {
+    typedef uint16_t char16_t;
+    typedef uint32_t char32_t;
+}
+#endif
 
 namespace utf {
     struct utf8;
@@ -197,14 +204,14 @@ namespace utf {
                 switch (len) {
                     case 1:
                     {
-                        uint16_t lead = *first;
+                        char16_t lead = *first;
                         if (lead >= 0xd800 && lead < 0xe000) { return false; }
                         break;
                     }
                     case 2:
                     {
-                        uint16_t lead = first[0];
-                        uint16_t trail = first[1];
+                        char16_t lead = first[0];
+                        char16_t trail = first[1];
                         if (lead < 0xd800 || lead >= 0xdc00) { return false; }
                         if (trail < 0xdc00 || trail >= 0xe000) { return false; }
                         break;
@@ -246,7 +253,7 @@ namespace utf {
                 codepoint_type res = 0;
                 // 10 most significant bits
                 res = (lead - 0xd800) << 10;
-                uint16_t trail = c[1];
+                char16_t trail = c[1];
                 // 10 least significant bits
                 res +=  (trail - 0xdc00);
                 return res + 0x10000;
