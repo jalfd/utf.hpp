@@ -29,6 +29,6 @@ auto sv = utf::make_stringview(u16data.begin(), u16data.end());
 sv.to<utf::utf8>(std::back_inserter(utf8_str));
 ~~~
 
-For documentation and more examples of use, see the [wiki](./wiki).
+For documentation and more examples of use, see the [wiki](https://github.com/jalfd/utf.hpp/wiki).
 
 *Distributed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).*
