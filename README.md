@@ -29,6 +29,10 @@ auto sv = utf::make_stringview(u16data.begin(), u16data.end());
 sv.to<utf::utf8>(std::back_inserter(utf8_str));
 ~~~
 
+## Current status
+The library is full-featured and, as far as I know, stable and bug-free.
+So I'd say go ahead and use it!
+
 For documentation and more examples of use, see the [wiki](https://github.com/jalfd/utf.hpp/wiki).
 
 *Distributed under the [Boost Software License](http://www.boost.org/LICENSE_1_0.txt).*
