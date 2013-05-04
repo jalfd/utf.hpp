@@ -14,7 +14,7 @@ int main() {
     // assume we have a plain UTF-8 string
     const char str[] = "hello world";
     // create a stringview over it
-    utf::stringview<utf::utf8> sv(str, str + sizeof(str));
+    utf::stringview<const char*> sv(str, str + sizeof(str));
     
     // print out a few statistics
     std::cout << "number of code units: " << sv.codeunits() << '\n';

@@ -641,9 +641,9 @@ void test_strings(const char(& s8)[N8], const char16_t(& s16)[N16], const char32
     const int L16 = N16-1;
     const int L32 = N32-1;
 
-    stringview<utf8> sv8(s8, s8 + L8);
-    stringview<utf16> sv16(s16, s16 + L16);
-    stringview<utf32> sv32(s32, s32 + L32);
+    stringview<const char*> sv8(s8, s8 + L8);
+    stringview<const char16_t*> sv16(s16, s16 + L16);
+    stringview<const char32_t*> sv32(s32, s32 + L32);
 
     CHECK(sv8.codepoints() == codepoints);
     CHECK(sv16.codepoints() == codepoints);
@@ -704,17 +704,17 @@ TEST_CASE("utf/stringview", "") {
         char16_t buf16[] = {0};
         char32_t buf32[] = {0};
 
-        stringview<utf8>((char*)buf8, (char*)buf8);
-        stringview<utf8, signed char*>((signed char*)buf8, (signed char*)buf8);
-        stringview<utf8, unsigned char*>((unsigned char*)buf8, (unsigned char*)buf8);
+        stringview<char*>((char*)buf8, (char*)buf8);
+        stringview<signed char*>((signed char*)buf8, (signed char*)buf8);
+        stringview<unsigned char*>((unsigned char*)buf8, (unsigned char*)buf8);
 
-        stringview<utf16>((char16_t*)buf16, (char16_t*)buf16);
-        stringview<utf16, uint16_t*>((uint16_t*)buf16, (uint16_t*)buf16);
-        stringview<utf16, int16_t*>((int16_t*)buf16, (int16_t*)buf16);
+        stringview<char16_t*>((char16_t*)buf16, (char16_t*)buf16);
+        stringview<uint16_t*>((uint16_t*)buf16, (uint16_t*)buf16);
+        stringview<int16_t*>((int16_t*)buf16, (int16_t*)buf16);
 
-        stringview<utf32>((char32_t*)buf32, (char32_t*)buf32);
-        stringview<utf32, uint32_t*>((uint32_t*)buf32, (uint32_t*)buf32);
-        stringview<utf32, int32_t*>((int32_t*)buf32, (int32_t*)buf32);
+        stringview<char32_t*>((char32_t*)buf32, (char32_t*)buf32);
+        stringview<uint32_t*>((uint32_t*)buf32, (uint32_t*)buf32);
+        stringview<int32_t*>((int32_t*)buf32, (int32_t*)buf32);
     }
 
     SECTION("empty string", "") {
@@ -722,9 +722,9 @@ TEST_CASE("utf/stringview", "") {
         char16_t buf16[] = {0};
         char32_t buf32[] = {0};
 
-        stringview<utf8> sv8(buf8, buf8);
-        stringview<utf16> sv16(buf16, buf16);
-        stringview<utf32> sv32(buf32, buf32);
+        stringview<char*> sv8(buf8, buf8);
+        stringview<char16_t*> sv16(buf16, buf16);
+        stringview<char32_t*> sv32(buf32, buf32);
         //test_strings(u8"", u"", U"", 0);
         char u8[] = {0};
         char16_t u16[] = {0};
@@ -793,7 +793,7 @@ TEST_CASE("utf/stringview", "") {
 
 TEST_CASE("utf/string_view/iterator-based", "Create a stringview based on an iterator range") {
     std::string str = "hello world";
-    stringview<utf8, std::string::const_iterator> sv(str.begin(), str.end());
+    stringview<std::string::const_iterator> sv(str.begin(), str.end());
     CHECK(sv.codepoints() == 11);
     CHECK(sv.bytes<utf16>() == 22);
     CHECK(sv.codeunits() == 11);
@@ -831,19 +831,19 @@ TEST_CASE("utf/native_encoding", "") {
 
 TEST_CASE("utf/make_stringview", "check that make_stringview produces stringviews of the correct types") {
     const char c = 'c';
-    stringview<utf8, const char*> sv1 = make_stringview(&c, &c);
+    stringview<const char*> sv1 = make_stringview(&c, &c);
     (void)sv1;
 
     std::string str = "hello";
-    stringview<utf8, std::string::iterator> sv2 = make_stringview(str.begin(), str.end());
+    stringview<std::string::iterator> sv2 = make_stringview(str.begin(), str.end());
     (void)sv2;
 
     std::vector<int16_t> s16;
-    stringview<utf16, std::vector<int16_t>::iterator> sv3 = make_stringview(s16.begin(), s16.end());
+    stringview<std::vector<int16_t>::iterator> sv3 = make_stringview(s16.begin(), s16.end());
     (void)sv3;
 
     std::vector<uint32_t> s32;
-    stringview<utf32, std::vector<uint32_t>::iterator> sv4 = make_stringview(s32.begin(), s32.end());
+    stringview<std::vector<uint32_t>::iterator> sv4 = make_stringview(s32.begin(), s32.end());
     (void)sv4;
 
 }

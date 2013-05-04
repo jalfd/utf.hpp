@@ -325,9 +325,10 @@ namespace utf {
         friend bool operator == (codepoint_iterator lhs, codepoint_iterator rhs) { return !(lhs != rhs); }
     };
 
-    template <typename E, typename Iter = const typename internal::utf_traits<E>::codeunit_type*>
+//    template <typename E, typename Iter = const typename internal::utf_traits<E>::codeunit_type*>
+    template <typename Iter, typename E = typename internal::native_encoding<typename std::iterator_traits<Iter>::value_type>::type>
     struct stringview {
-        typedef typename internal::utf_traits<E>::codeunit_type codeunit_type;
+        typedef typename std::iterator_traits<Iter>::value_type codeunit_type;
 
         stringview(const Iter first, const Iter last)
         : first(first), last(last) {}
@@ -394,15 +395,14 @@ namespace utf {
 
     // convenience stuff
     template <typename T, size_t N>
-    stringview<typename internal::native_encoding<T>::type> make_stringview(T (&arr)[N]) {
-        return stringview<typename internal::native_encoding<T>::type>(arr, arr + N);
+    stringview<const T*> make_stringview(T (&arr)[N]) {
+        return stringview<const T*>(arr, arr + N);
     }
 
     template <typename Iter>
-    stringview<typename internal::native_encoding<typename std::iterator_traits<Iter>::value_type>::type, Iter>
+    stringview<Iter>
     make_stringview(Iter first, Iter last) {
-        typedef typename internal::native_encoding<typename std::iterator_traits<Iter>::value_type>::type enc;
-        return stringview<enc, Iter>(first, last);
+        return stringview<Iter>(first, last);
     }
 }
 
