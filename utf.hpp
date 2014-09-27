@@ -335,6 +335,9 @@ namespace utf {
         stringview()
         : first(), last() {}
 
+        Iter raw_begin() const { return first; }
+        Iter raw_end() const { return last; }
+
         codepoint_iterator<Iter> begin() const { return codepoint_iterator<Iter>(first); }
         codepoint_iterator<Iter> end() const { return codepoint_iterator<Iter>(last); }
         
