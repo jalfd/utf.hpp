@@ -401,6 +401,24 @@ namespace utf {
         Iter last;
     };
 
+    template <typename IterL, typename IterR, typename E>
+    inline bool operator == (const stringview<IterL, E>& lhs, const stringview<IterR, E>& rhs) {
+        return lhs.codepoints() == rhs.codepoints() && std::equal(lhs.raw_begin(), lhs.raw_end(), rhs.raw_begin());
+    }
+    template <typename IterL, typename IterR, typename E>
+    inline bool operator != (const stringview<IterL, E>& lhs, const stringview<IterR, E>& rhs) {
+        return !(lhs == rhs);
+    }
+
+    template <typename IterL, typename EL, typename IterR, typename ER>
+    inline bool operator != (const stringview<IterL, EL>& lhs, const stringview<IterR, ER>& rhs) {
+        return lhs.codepoints() == rhs.codepoints() && std::equal(lhs.begin(), lhs.end(), rhs.begin());
+    }
+    template <typename IterL, typename EL, typename IterR, typename ER>
+    inline bool operator == (const stringview<IterL, EL>& lhs, const stringview<IterR, ER>& rhs) {
+        return !(lhs != rhs);
+    }
+
     // convenience stuff
     template <typename T, size_t N>
     stringview<const T*> make_stringview(T (&arr)[N]) {
