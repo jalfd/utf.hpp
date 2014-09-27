@@ -360,6 +360,9 @@ namespace utf {
             return true;
         }
 
+        bool empty() const {
+            return begin() == end();
+        }
         size_t codepoints() const {
             return std::distance(begin(), end());
         }
