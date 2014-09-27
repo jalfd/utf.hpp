@@ -11,6 +11,7 @@
 #include <cassert>
 #include <stdint.h>
 #include <iterator>
+#include <algorithm>
 
 #ifdef UTFHPP_NO_CPP11
 namespace utf {
@@ -47,7 +48,7 @@ namespace utf {
             typedef typename encoding_for_size<sizeof(T)>::type type;
         };
 
-        bool validate_codepoint(codepoint_type c) {
+        inline bool validate_codepoint(codepoint_type c) {
             if (c < 0xd800) { return true; }
             if (c < 0xe000) { return false; }
             if (c < 0x110000) { return true; }
@@ -186,7 +187,6 @@ namespace utf {
             static size_t read_length(codeunit_type c) {
                 if (c < 0xd800) { return 1; }
                 if (c < 0xdc00) { return 2; }
-                if (c < 0x010000) { return 1; }
                 return 1;
             }
             static size_t write_length(codepoint_type c) {
@@ -325,13 +325,15 @@ namespace utf {
         friend bool operator == (codepoint_iterator lhs, codepoint_iterator rhs) { return !(lhs != rhs); }
     };
 
-//    template <typename E, typename Iter = const typename internal::utf_traits<E>::codeunit_type*>
     template <typename Iter, typename E = typename internal::native_encoding<typename std::iterator_traits<Iter>::value_type>::type>
     struct stringview {
         typedef typename std::iterator_traits<Iter>::value_type codeunit_type;
 
         stringview(const Iter first, const Iter last)
         : first(first), last(last) {}
+
+        stringview()
+        : first(), last() {}
 
         codepoint_iterator<Iter> begin() const { return codepoint_iterator<Iter>(first); }
         codepoint_iterator<Iter> end() const { return codepoint_iterator<Iter>(last); }
@@ -389,8 +391,8 @@ namespace utf {
         }
 
     private:
-        const Iter first;
-        const Iter last;
+        Iter first;
+        Iter last;
     };
 
     // convenience stuff
