@@ -291,10 +291,7 @@ namespace utf {
     }
     
     template <typename It>
-    class codepoint_iterator : public std::iterator<std::input_iterator_tag
-    , const codepoint_type, ptrdiff_t
-    , const codepoint_type*
-    , const codepoint_type&> {
+    class codepoint_iterator {
         typedef typename std::iterator_traits<It>::value_type codeunit_type;
         typedef typename internal::native_encoding<codeunit_type>::type encoding;
         typedef internal::utf_traits<encoding> traits_type;
@@ -302,6 +299,12 @@ namespace utf {
         It pos;
 
     public:
+        typedef std::input_iterator_tag iterator_category;
+        typedef codepoint_type value_type;
+        typedef std::ptrdiff_t difference_type;
+        typedef std::remove_const_t<codepoint_type>* pointer;
+        typedef codepoint_type& reference;
+
         explicit codepoint_iterator() : val(), pos() {}
         explicit codepoint_iterator(It pos) : val(), pos(pos) {}
         codepoint_iterator(const codepoint_iterator& it) : val(it.val), pos(it.pos) {}
