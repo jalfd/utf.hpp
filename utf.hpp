@@ -302,7 +302,7 @@ namespace utf {
         typedef std::input_iterator_tag iterator_category;
         typedef codepoint_type value_type;
         typedef std::ptrdiff_t difference_type;
-        typedef std::remove_const_t<codepoint_type>* pointer;
+        typedef std::remove_const<codepoint_type>::type pointer;
         typedef codepoint_type& reference;
 
         explicit codepoint_iterator() : val(), pos() {}
@@ -320,7 +320,7 @@ namespace utf {
             return *this;
 		}
         codepoint_iterator operator++(int) {
-            codepoint_type tmp = *this;
+            codepoint_iterator tmp = *this;
             ++(*this);
             return tmp;
         }
