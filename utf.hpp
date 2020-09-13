@@ -320,7 +320,7 @@ namespace utf {
             return *this;
 		}
         codepoint_iterator operator++(int) {
-            codepoint_type tmp = *this;
+            codepoint_iterator tmp = *this;
             ++(*this);
             return tmp;
         }
